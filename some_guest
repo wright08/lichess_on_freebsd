@@ -1,0 +1,29 @@
+#!/usr/bin/env zsh
+
+local f_rdisk
+
+zmodload zsh/zutil
+zparseopts -D -F -K -- \
+	{r,-reset-disk}=f_rdisk || return 1
+
+[[ -z "$f_rdisk" ]] || {
+	print Resetting disk
+	tar xzf debian-12-generic-amd64-daily.tar.xz
+	truncate -s +5G disk.raw
+	id=$(mdconfig disk.raw)
+	gpart recover $id
+	gpart resize -i $(gpart show $id | awk '/linux-data/ { print $3 }') $id
+	mdconfig -du $id
+}
+
+mkisofs -output seed.iso -volid cidata -joliet -rock user-data meta-data network-config
+
+bhyve -c 2 -m 16G -H -A -P \
+-s 0,hostbridge \
+-s 2,virtio-blk,/root/disk.raw \
+-s 3,virtio-net,tap0 \
+-s 4,lpc -l com1,stdio -l bootrom,/usr/local/share/uefi-firmware/BHYVE_UEFI.fd \
+-s 5,ahci-cd,/root/seed.iso \
+debvm
+
+#-s 1,ahci-cd,/root/isos/bookworm-alpha-amd64-netinst.iso \

@@ -1,0 +1,45 @@
+#cloud-config
+# vim: ft=yaml
+
+disable_root: false
+
+bootcmd:
+  - cloud-init-per instance ntp cloud-init single --name ntp
+
+ntp:
+  enabled: yes
+
+users:
+  - name: root
+    plain_text_passwd: pass
+    lock_passwd: no
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC3yyDv3sfwKCIMGfv5riCIIaQXnDHWbrraHUjNlO+6NW2dxbb8ShmwpS/PWtMrUfKd8QzO4JEbAOPJJWCH3ulu6KTp6zcIosyiljRAQgLwtANNbJvKlwWfx2YnY8UGFsO/dclIsP8aTnWdVnJa42kGD746jpTalghINTGNNnrGxkI/sD9NlWf/YYMhVDVi0pHJiwXGSZHBIkl292iH3MpA2lXwXeE1A260pknYWxSS8VzLM4qYcRtYTjM3u3cpbNceZD+qSSNVN+3Z/JneCXvMA+AO+A07klu3jbSDz3emdA4d9FngsYSZmPPebGJqrKyXzHIwxwAPBAgf+ftTidcdF0VYnJhwYmwobRv0rHhNw7fhkF9c2yLl/3IwRJJqYVl9Im6q8Q3xpPtqBi8GpIOD8dsXYIyg9KfFKA/0VthL3wT1WDX2tDT0tpV7uPsK9obVqNigvYcdxe8PvKLqfsJ4qIJMJ8y05hoT0+j0mSxqRh4cLmaq0waqrhQiWWR2QGU= root@proclus
+
+apt:
+  primary:
+    - arches: [ default ]
+      uri: 'https://mirrors.ocf.berkeley.edu/debian/'
+  security:
+    - arches: [ default ]
+      uri: 'http://security.debian.org/debian-security'
+  sources:
+    mongodb-org.list:
+      source: 'deb [trusted=yes] http://repo.mongodb.org/apt/debian bullseye/mongodb-org/6.0 main'
+    bullseye.list:
+      source: 'deb https://mirrors.ocf.berkeley.edu/debian/ bullseye main'
+
+packages:
+  - git
+  - openjdk-17-jdk-headless
+  - mongodb-org
+
+runcmd:
+  - mkdir /lila_bootstrap
+  - cd /lila_bootstrap
+  - 'wget -qO- "https://github.com/coursier/launchers/raw/master/cs-$(uname -m)-pc-linux.gz" | gzip -d > cs'
+  - chmod +x cs
+  - yes | ./cs setup 2> cs_setup.log
+  - 'wget -qO- https://deb.nodesource.com/setup_19.x | bash -'
+  - apt-get install -y nodejs
+  - 'export SHELL=/bin/bash; wget -qO- https://get.pnpm.io/install.sh | sh -'

@@ -1,0 +1,14 @@
+# vim: ft=yaml
+version: 2
+ethernets: 
+  eth:
+    match:
+      name: enp*
+    addresses:
+      - 10.0.0.60/24
+    routes:
+      - to: default
+        via: 10.0.0.1
+    nameservers:
+      addresses: [8.8.8.8, 1.1.1.1]
+    link-local: []
